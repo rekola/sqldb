@@ -42,6 +42,14 @@ namespace sqldb {
       addComponent(std::move(value1));
       addComponent(std::move(value2));
     }
+    explicit Key(std::string value1, int value2) noexcept {
+      addComponent(std::move(value1));
+      addComponent(value2);
+    }
+    explicit Key(std::string_view value1, int value2) noexcept {
+      addComponent(std::move(value1));
+      addComponent(value2);
+    }
     explicit Key(Key value1, Key value2, Key value3, Key value4) noexcept {
       addComponent(std::move(value1));
       startColumn();
