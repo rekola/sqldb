@@ -57,7 +57,7 @@ public:
     }
   }
   
-  int getInt(int row_index, int column_index, int default_value) const {
+  int getInteger(int row_index, int column_index, int default_value) const {
     if (!isNull(row_index, column_index)) {
       return DBFReadIntegerAttribute(h_, row_index, column_index);
     } else {
@@ -170,7 +170,7 @@ public:
   }
   
   long long getInteger(int column_index, long long default_value = 0) override {
-    return dbf_->getInt(current_row_, column_index, default_value);
+    return dbf_->getInteger(current_row_, column_index, default_value);
   }
 
   Key getKey(int column_index) override {
@@ -292,7 +292,7 @@ DBase4::seek(const Key & key) {
       return unique_ptr<DBase4Cursor>(nullptr);
     }
   } else {
-    return seek(key.getInt(1));
+    return seek(key.getInteger(1));
   }
 }
 

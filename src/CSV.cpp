@@ -366,7 +366,7 @@ CSV::getColumnName(int column_index, int sheet) const {
 
 unique_ptr<Cursor>
 CSV::seek(const Key & key) {
-  return seek(key.getInt(1), key.getInt(0));
+  return seek(key.getInteger(1), key.getInteger(0));
 }
 
 unique_ptr<Cursor>
