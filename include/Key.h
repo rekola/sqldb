@@ -131,7 +131,7 @@ namespace sqldb {
 
     void addComponent(const Key & other, size_t idx = 0) noexcept {
       if (is_numeric(other.getType(idx))) {
-	addComponent(other.getLongLong(idx));
+	addComponent(other.getInteger(idx));
       } else {
 	addComponent(other.getText(idx));
       }
@@ -140,7 +140,7 @@ namespace sqldb {
     void addSubKey(const Key & other) noexcept {
       for (size_t i = 0; i < other.size(); i++) {
 	if (is_numeric(other.getType(i))) {
-	  addComponent(other.getLongLong(i));
+	  addComponent(other.getInteger(i));
 	} else {
 	  addComponent(other.getText(i));
 	}
@@ -164,19 +164,15 @@ namespace sqldb {
       if (idx < components_.size()) {
 	auto & component = components_[idx];
 	if (std::holds_alternative<long long>(component)) {
-	  return ColumnType::INT64;
+	  return ColumnType::INTEGER;
 	} else if (std::holds_alternative<std::string>(component)) {
 	  return ColumnType::VARCHAR;
 	}
       }
       return ColumnType::ANY;
     }
-    
-    int getInt(size_t idx) const noexcept {
-      return getLongLong(idx);
-    }
-    
-    long long getLongLong(size_t idx) const noexcept {
+        
+    long long getInteger(size_t idx) const noexcept {
       if (idx < components_.size()) {
 	if (std::holds_alternative<long long>(components_[idx])) {
 	  return std::get<long long>(components_[idx]);
@@ -259,7 +255,7 @@ namespace sqldb {
       for (size_t i = 0; i < components_.size(); i++) {
 	if (i != 0) s += "|";
 	if (is_numeric(getType(i))) {
-	  s += std::to_string(getLongLong(i));
+	  s += std::to_string(getInteger(i));
 	} else {
 	  s += getText(i);
 	}
@@ -279,7 +275,7 @@ namespace sqldb {
     for (size_t i = 0; i < key.size(); i++) {
       if (!s.empty()) s += "|";
       if (is_numeric(key.getType(i))) {
-	s += std::to_string(key.getLongLong(i));
+	s += std::to_string(key.getInteger(i));
       } else {
 	s += key.getText(i);
       }

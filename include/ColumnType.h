@@ -4,8 +4,7 @@
 namespace sqldb {
   enum class ColumnType {
     ANY = 0,
-    INT,
-    INT64,
+    INTEGER,
     CHAR,
     BOOL,
     VARCHAR, // single line of text
@@ -24,8 +23,7 @@ namespace sqldb {
 
   static inline bool is_numeric(ColumnType type) {
     switch (type) {
-    case ColumnType::INT:
-    case ColumnType::INT64:
+    case ColumnType::INTEGER:
     case ColumnType::BOOL:
     case ColumnType::DATETIME:
     case ColumnType::DATE:

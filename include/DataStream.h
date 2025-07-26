@@ -35,13 +35,12 @@ namespace sqldb {
     }
     
     virtual bool getBool(int column_index, bool default_value = false) {
-      return getInt(column_index, default_value ? 1 : 0) ? true : false;
+      return getInteger(column_index, default_value ? 1 : 0) ? true : false;
     }
 
     virtual double getDouble(int column_index, double default_value = 0.0) = 0;
     virtual float getFloat(int column_index, float default_value = 0.0f) = 0;
-    virtual int getInt(int column_index, int default_value = 0) = 0;
-    virtual long long getLongLong(int column_index, long long default_value = 0) = 0;
+    virtual long long getInteger(int column_index, long long default_value = 0) = 0;
     virtual Key getKey(int column_index) = 0;
 
     virtual void set(int column_idx, std::string_view value, bool is_defined = true) = 0;
@@ -60,7 +59,7 @@ namespace sqldb {
       } else if (key.size() >= 2) {
 	set(column_idx, key.serializeToText());
       } else if (sqldb::is_numeric(key.getType(0))) {
-	set(column_idx, key.getLongLong(0));
+	set(column_idx, key.getInteger(0));
       } else {
 	set(column_idx, key.getText(0));
       }

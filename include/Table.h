@@ -72,15 +72,12 @@ namespace sqldb {
 	  for (int i = 0; i < cursor->getNumFields(); i++) {
 	    bool is_null = cursor->isNull(i);
 	    switch (cursor->getColumnType(i)) {
-	    case sqldb::ColumnType::INT:
 	    case sqldb::ColumnType::BOOL:
 	    case sqldb::ColumnType::ENUM:
-	      my_cursor->bind(cursor->getInt(i), !is_null);
-	      break;
-	    case sqldb::ColumnType::INT64:
+	    case sqldb::ColumnType::INTEGER:
 	    case sqldb::ColumnType::DATETIME:
 	    case sqldb::ColumnType::DATE:
-	      my_cursor->bind(cursor->getLongLong(i), !is_null);
+	      my_cursor->bind(cursor->getInteger(i), !is_null);
 	      break;
 	    case sqldb::ColumnType::DOUBLE:
 	      my_cursor->bind(cursor->getDouble(i), !is_null);
@@ -153,8 +150,7 @@ namespace sqldb {
       return r;
     }
     
-    void addIntColumn(std::string_view name) { addColumn(std::move(name), ColumnType::INT); }
-    void addInt64Column(std::string_view name) { addColumn(std::move(name), ColumnType::INT64); }
+    void addIntegerColumn(std::string_view name) { addColumn(std::move(name), ColumnType::INTEGER); }
     void addCharColumn(std::string_view name) { addColumn(std::move(name), ColumnType::CHAR); }
     void addDateTimeColumn(std::string_view name) { addColumn(std::move(name), ColumnType::DATETIME); }
     void addDateColumn(std::string_view name) { addColumn(std::move(name), ColumnType::DATE); }

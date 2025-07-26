@@ -260,18 +260,8 @@ public:
     }
     return default_value;
   }
-
-  int getInt(int column_index, int default_value = 0) override {
-    auto s = getText(column_index);
-    if (!s.empty()) {
-      int i;
-      auto [ ptr, ec ] = std::from_chars(s.data(), s.data() + s.size(), i);
-      if (ec == std::errc()) return i;	
-    }
-    return default_value;
-  }
-
-  long long getLongLong(int column_index, long long default_value = 0) override {
+  
+  long long getInteger(int column_index, long long default_value = 0) override {
     auto s = getText(column_index);
     if (!s.empty()) {
       long long ll;
@@ -342,7 +332,7 @@ private:
 CSV::CSV(std::string csv_file, bool has_records) {
   csv_.push_back(make_shared<CSVFile>(move(csv_file), has_records));
   
-  std::vector<ColumnType> key_type = { ColumnType::INT, ColumnType::INT };
+  std::vector<ColumnType> key_type = { ColumnType::INTEGER, ColumnType::INTEGER };
   setKeyType(std::move(key_type));
 }
 

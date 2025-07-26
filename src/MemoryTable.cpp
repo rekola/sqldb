@@ -160,7 +160,7 @@ public:
       return 0;
     }
   }
-    
+  
   void set(int column_idx, string_view value, bool is_defined = true) override {
     if (is_defined) {
       pending_row_[column_idx] = value;
@@ -267,17 +267,7 @@ public:
     return default_value;
   }
 
-  int getInt(int column_index, int default_value = 0) override {
-    auto s = getText(column_index);
-    if (!s.empty()) {
-      int i;
-      auto [ ptr, ec ] = std::from_chars(s.data(), s.data() + s.size(), i);
-      if (ec == std::errc()) return i;	
-    }
-    return default_value;
-  }
-
-  long long getLongLong(int column_index, long long default_value = 0) override {
+  long long getInteger(int column_index, long long default_value = 0) override {
     auto s = getText(column_index);
     if (!s.empty()) {
       long long ll;

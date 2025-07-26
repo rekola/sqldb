@@ -37,9 +37,8 @@ public:
   void set(int column_idx, const void * data, size_t len, bool is_defined = true) override;
   void set(int column_idx, double value, bool is_defined = true) override;
   
-  int getInt(int column_idx, int default_value = 0) override;
   double getDouble(int column_idx, double default_value = 0.0) override;
-  long long getLongLong(int column_idx, long long default_value = 0LL) override;
+  long long getInteger(int column_idx, long long default_value = 0LL) override;
   std::string_view getText(int column_idx) override;
   std::vector<uint8_t> getBlob(int column_idx) override;
   
@@ -321,34 +320,6 @@ MySQLStatement::set(int column_idx, const void * data, size_t len, bool is_defin
   setData(column_idx, MYSQL_TYPE_BLOB, data, len, is_defined);
 }
 
-int
-MySQLStatement::getInt(int column_idx, int default_value) {
-  if (column_idx < 0 || column_idx >= MYSQL_MAX_BOUND_VARIABLES) throw SQLException(SQLException::BAD_COLUMN_INDEX, "");
-
-  assert(stmt_);
-  
-  long a = default_value;
-   
-  if (bind_is_null_[column_idx]) {
-
-  } else if (bind_length_[column_idx]) {
-    long unsigned int dummy1;
-    my_bool dummy2;
-    MYSQL_BIND b;
-    memset(&b, 0, sizeof(MYSQL_BIND));
-    b.buffer_type = MYSQL_TYPE_LONG;
-    b.buffer = (char *)&a;  
-    b.buffer_length = sizeof(a);
-    b.length = &dummy1; 
-    b.is_null = &dummy2;
-    if (mysql_stmt_fetch_column(stmt_, &b, column_idx, 0) != 0) {
-      throw SQLException(SQLException::GET_FAILED, mysql_stmt_error(stmt_));
-    }
-  }
-
-  return a;
-}
-
 double
 MySQLStatement::getDouble(int column_idx, double default_value) {
   if (column_idx < 0 || column_idx >= MYSQL_MAX_BOUND_VARIABLES) throw SQLException(SQLException::BAD_COLUMN_INDEX, "");
@@ -378,7 +349,7 @@ MySQLStatement::getDouble(int column_idx, double default_value) {
 }
 
 long long
-MySQLStatement::getLongLong(int column_idx, long long default_value) {
+MySQLStatement::getInteger(int column_idx, long long default_value) {
   if (column_idx < 0 || column_idx >= MYSQL_MAX_BOUND_VARIABLES) throw SQLException(SQLException::BAD_COLUMN_INDEX, "");
 
   assert(stmt_);

@@ -92,12 +92,6 @@ public:
     }
   }
   
-  int getInt(int column_index, int default_value = 0) override {
-    if (!isNull(column_index)) {
-      return sqlite3_column_int(stmt_, column_index);
-    }
-    return default_value;
-  }
   double getDouble(int column_index, double default_value = 0.0) override {
     if (!isNull(column_index)) {
       return sqlite3_column_double(stmt_, column_index);
@@ -110,7 +104,7 @@ public:
     }
     return default_value;
   }
-  long long getLongLong(int column_index, long long default_value = 0) override {
+  long long getInteger(int column_index, long long default_value = 0) override {
     if (!isNull(column_index)) {
       return sqlite3_column_int64(stmt_, column_index);
     }
@@ -161,7 +155,7 @@ public:
   
   ColumnType getColumnType(int column_index) const override {
     switch (sqlite3_column_type(stmt_, column_index)) {
-    case SQLITE_INTEGER: return ColumnType::INT64;
+    case SQLITE_INTEGER: return ColumnType::INTEGER;
     case SQLITE_FLOAT: return ColumnType::FLOAT;
     case SQLITE_BLOB: return ColumnType::VARCHAR; // should be blob
     case SQLITE3_TEXT: return ColumnType::VARCHAR;

@@ -58,7 +58,7 @@ public:
     switch (column_index) {
     case 0: return ColumnType::VARCHAR;
     case 1: return ColumnType::VECTOR;
-    case 2: case 3: return ColumnType::INT;
+    case 2: case 3: return ColumnType::INTEGER;
     }
     return ColumnType::ANY;
   }
@@ -135,11 +135,7 @@ public:
     return audio_->getInt(column_index, static_cast<int>(default_value));
   }
 
-  int getInt(int column_index, int default_value = 0) override {
-    return audio_->getInt(column_index, default_value);
-  }
-
-  long long getLongLong(int column_index, long long default_value = 0) override {
+  long long getInteger(int column_index, long long default_value = 0) override {
     return audio_->getInt(column_index, default_value);    
   }
 
@@ -225,7 +221,7 @@ private:
 Audio::Audio(std::string filename) {
   audio_.push_back(make_shared<AudioFile>(move(filename)));
 
-  std::vector<ColumnType> key_type = { ColumnType::INT64 };
+  std::vector<ColumnType> key_type = { ColumnType::INTEGER };
   setKeyType(std::move(key_type));
   setHasHumanReadableKey(true);
 }
@@ -264,10 +260,10 @@ Audio::seekBegin(int track) {
 
 unique_ptr<Cursor>
 Audio::seek(const Key & key) {
-  int track = key.getLongLong(0);
+  int track = key.getInteger(0);
   if (key.size() == 1) {
     return make_unique<AudioCursor>(audio_[track], track, 0, 0);
   } else {
-    return make_unique<AudioCursor>(audio_[track], track, key.getLongLong(1), key.getLongLong(2));
+    return make_unique<AudioCursor>(audio_[track], track, key.getInteger(1), key.getInteger(2));
   }
 }
