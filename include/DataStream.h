@@ -27,6 +27,8 @@ namespace sqldb {
     virtual int getNumFields() const = 0;
     virtual bool next() = 0;
     virtual const std::string & getColumnName(int column_index) = 0;
+    virtual bool isColumnNullable(int column_index) const = 0;
+    virtual bool isColumnUnique(int column_index) const = 0;
 
     virtual const std::vector<float> & getVector(int column_index) { return null_vector; }
 

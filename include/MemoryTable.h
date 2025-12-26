@@ -15,7 +15,7 @@ namespace sqldb {
 
     std::unique_ptr<Table> copy() const override { return std::make_unique<MemoryTable>(*this); }
 
-    void addColumn(std::string_view name, sqldb::ColumnType type, bool unique, int decimals) override;
+    void addColumn(std::string_view name, sqldb::ColumnType type, bool nullable, bool unique, int decimals) override;
     
     std::unique_ptr<Cursor> insert(const Key & key) override;
     std::unique_ptr<Cursor> insert(int sheet = 0) override;
@@ -30,6 +30,7 @@ namespace sqldb {
     
     ColumnType getColumnType(int column_index, int sheet) const override;
     const std::string & getColumnName(int column_index, int sheet) const override;
+    bool isColumnNullable(int column_index, int sheet) const override;
     bool isColumnUnique(int column_index, int sheet) const override;
     int getColumnDecimals(int column_index) const override;
         

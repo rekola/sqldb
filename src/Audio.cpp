@@ -165,7 +165,7 @@ public:
     }
   }
 
-  bool isNull(int column_index) const override { return !(column_index >= 0 && column_index < getNumFields()); }
+  bool isNull(int column_index) const override { return false; }
   
   void set(int column_idx, std::string_view value, bool is_defined = true) override {
     throw std::runtime_error("Audio is read-only");
@@ -197,6 +197,14 @@ public:
 
   ColumnType getColumnType(int column_index) const override {
     return audio_->getColumnType(column_index);
+  }
+
+  bool isColumnNullable(int col) const override {
+    return false;
+  }
+
+  bool isColumnUnique(int col) const override {
+    return false;
   }
 
 protected:

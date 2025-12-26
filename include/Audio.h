@@ -20,12 +20,15 @@ namespace sqldb {
     int getNumFields(int sheet) const override;    
     const std::string & getColumnName(int column_index, int sheet) const override;
     ColumnType getColumnType(int column_index, int sheet) const override;
-    
+
+    bool isColumnNullable(int column_index, int sheet = 0) const override { return true; }
+    bool isColumnUnique(int column_index, int sheet = 0) const override { return false; }
+
     void clear() override {
       throw std::runtime_error("Audio is read-only");
     }
 
-    void addColumn(std::string_view name, sqldb::ColumnType type, bool unique, int decimals) override {
+    void addColumn(std::string_view name, sqldb::ColumnType type, bool nullable, bool unique, int decimals) override {
       throw std::runtime_error("Audio is read-only");
     }
 

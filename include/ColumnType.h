@@ -11,7 +11,6 @@ namespace sqldb {
     TEXT, // multiple lines of text
     DATETIME,
     DATE,
-    FLOAT,
     DOUBLE,
     URL,
     TEXT_KEY,
@@ -21,13 +20,12 @@ namespace sqldb {
     VECTOR
   };
 
-  static inline bool is_numeric(ColumnType type) {
+  static inline bool is_numeric(ColumnType type) noexcept {
     switch (type) {
     case ColumnType::INTEGER:
     case ColumnType::BOOL:
     case ColumnType::DATETIME:
     case ColumnType::DATE:
-    case ColumnType::FLOAT:
     case ColumnType::DOUBLE:
     case ColumnType::VECTOR:
       return true;

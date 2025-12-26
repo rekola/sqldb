@@ -291,6 +291,9 @@ public:
   const std::string & getColumnName(int column_index) override {
     return csv_->getColumnName(column_index);
   }
+
+  bool isColumnNullable(int column_index) const override { return true; }
+  bool isColumnUnique(int column_index) const override { return false; }
   
   void set(int column_idx, std::string_view value, bool is_defined = true) override {
     throw std::runtime_error("CSV is read-only");

@@ -156,8 +156,8 @@ public:
   ColumnType getColumnType(int column_index) const override {
     switch (sqlite3_column_type(stmt_, column_index)) {
     case SQLITE_INTEGER: return ColumnType::INTEGER;
-    case SQLITE_FLOAT: return ColumnType::FLOAT;
-    case SQLITE_BLOB: return ColumnType::VARCHAR; // should be blob
+    case SQLITE_FLOAT: return ColumnType::DOUBLE;
+    case SQLITE_BLOB: return ColumnType::BLOB;
     case SQLITE3_TEXT: return ColumnType::VARCHAR;
     case SQLITE_NULL:
     default:
@@ -185,6 +185,16 @@ public:
     }
     auto idx = static_cast<size_t>(column_index);
     return idx < column_names_.size() ? column_names_[idx] : null_string;
+  }
+
+  bool isColumnNullable(int col) const override {
+    // TODO: return correct value
+    return true;
+  }
+
+  bool isColumnUnique(int col) const override {
+    // TODO: return correct value
+    return false;
   }
 
 protected:

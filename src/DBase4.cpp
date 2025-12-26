@@ -198,6 +198,14 @@ public:
     return dbf_->getColumnName(column_index);
   }
 
+  bool isColumnNullable(int col) const override {
+    return true;
+  }
+
+  bool isColumnUnique(int col) const override {
+    return false;
+  }
+  
   void set(int column_idx, std::string_view value, bool is_defined = true) override {
     throw std::runtime_error("dBase4 file is read-only");
   }

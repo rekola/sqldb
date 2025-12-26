@@ -32,9 +32,10 @@ public:
     data_.erase(key);
   }
 
-  void addColumn(std::string_view name, sqldb::ColumnType type, bool unique, int decimals) {
+  // Unique columns are not supported
+  void addColumn(std::string_view name, sqldb::ColumnType type, bool nullable, bool unique, int decimals) {
     std::lock_guard<std::mutex> guard(mutex_);
-    header_row_.push_back(std::tuple(type, std::string(name), unique, decimals));
+    header_row_.push_back(std::tuple(type, std::string(name), nullable, decimals));
   }
   
   int getNumFields() const {
@@ -58,7 +59,7 @@ public:
     return idx < header_row_.size() ? std::get<1>(header_row_[idx]) : null_string;
   }
 
-  bool isColumnUnique(int column_index) const {
+  bool isColumnNullable(int column_index) const {
     std::lock_guard<std::mutex> guard(mutex_);
     auto idx = static_cast<size_t>(column_index);
     return idx < header_row_.size() ? std::get<2>(header_row_[idx]) : false;
@@ -77,14 +78,14 @@ public:
 
   size_t size() const { return data_.size(); }
 
+  static inline std::string null_string;
+
 private:
   // use ordered map for iterator stability
   std::map<Key, std::vector<std::string> > data_;
   std::vector<std::tuple<ColumnType, std::string, bool, int> > header_row_;
   long long auto_increment_ = 0;
   mutable std::mutex mutex_;
-
-  static inline std::string null_string;
 };
 
 class sqldb::MemoryTableCursor : public Cursor {
@@ -195,7 +196,7 @@ public:
       auto & row = it_->second;
       if (idx < row.size()) return row[idx];
     }
-    return null_string;    
+    return MemoryStorage::null_string;    
   }
     
   std::vector<uint8_t> getBlob(int column_index) override {
@@ -226,19 +227,31 @@ public:
     
   const std::string & getColumnName(int column_index) override {
     auto idx = static_cast<size_t>(column_index);
-    return idx < header_row_.size() ? std::get<1>(header_row_[idx]) : null_string;
+    return idx < header_row_.size() ? std::get<1>(header_row_[idx]) : MemoryStorage::null_string;
+  }
+
+  bool isColumnNullable(int column_index) const override {
+    auto idx = static_cast<size_t>(column_index);
+    return idx < header_row_.size() ? std::get<2>(header_row_[idx]) : true;
+  }
+  bool isColumnUnique(int column_index) const override {
+    return false;
   }
     
   bool isNull(int column_index) const override {
-    std::lock_guard<std::mutex> guard(storage_->mutex_);
-
-    auto & data = storage_->data_;
-    if (column_index >= 0 && it_ != data.end()) {
-      auto idx = static_cast<size_t>(column_index);
-      auto & row = it_->second;
-      if (idx < row.size()) return row[idx].empty();
+    if (!isColumnNullable(column_index)) {
+      return false;
+    } else {
+      std::lock_guard<std::mutex> guard(storage_->mutex_);
+      
+      auto & data = storage_->data_;
+      if (column_index >= 0 && it_ != data.end()) {
+	auto idx = static_cast<size_t>(column_index);
+	auto & row = it_->second;
+	if (idx < row.size()) return row[idx].empty();
+      }
+      return true;
     }
-    return true;
   }
 
   long long getLastInsertId() const override {
@@ -305,8 +318,6 @@ private:
   std::vector<int> selected_columns_;
   bool is_increment_op_;
   long long last_insert_id_ = 0;
-
-  static inline std::string null_string;
 };
 
 std::unique_ptr<Cursor>
@@ -368,8 +379,8 @@ MemoryTable::MemoryTable(std::vector<ColumnType> key_type)
 }
 
 void
-MemoryTable::addColumn(std::string_view name, sqldb::ColumnType type, bool unique, int decimals) {
-  storage_->addColumn(std::move(name), type, unique, decimals);
+MemoryTable::addColumn(std::string_view name, sqldb::ColumnType type, bool nullable, bool unique, int decimals) {
+  storage_->addColumn(std::move(name), type, nullable, unique, decimals);
 }
 
 std::unique_ptr<Cursor>
@@ -409,22 +420,27 @@ MemoryTable::seek(const Key & key) {
 
 int
 MemoryTable::getNumFields(int sheet) const {
-  return storage_->getNumFields();
+  return sheet == 0 ? storage_->getNumFields() : 0;
 }
 
 ColumnType
 MemoryTable::getColumnType(int column_index, int sheet) const {
-  return storage_->getColumnType(column_index);
+  return sheet == 0 ? storage_->getColumnType(column_index) : ColumnType::ANY;
 }
 
 const std::string &
 MemoryTable::getColumnName(int column_index, int sheet) const {
-  return storage_->getColumnName(column_index);
+  return sheet == 0 ? storage_->getColumnName(column_index) : MemoryStorage::null_string;
+}
+
+bool
+MemoryTable::isColumnNullable(int column_index, int sheet) const {
+  return sheet == 0 ? storage_->isColumnNullable(column_index) : true;
 }
 
 bool
 MemoryTable::isColumnUnique(int column_index, int sheet) const {
-  return storage_->isColumnUnique(column_index);
+  return false;
 }
 
 int

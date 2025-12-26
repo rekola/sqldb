@@ -42,13 +42,14 @@ namespace sqldb {
     }    
     
     virtual std::unique_ptr<Table> copy() const = 0;
-    virtual void addColumn(std::string_view name, sqldb::ColumnType type, bool unique = false, int decimals = -1) = 0;
+    virtual void addColumn(std::string_view name, sqldb::ColumnType type, bool nullable = true, bool unique = false, int decimals = -1) = 0;
     virtual void clear() = 0;
 
     virtual int getNumSheets() const { return 1; }
     virtual int getNumFields(int sheet = 0) const = 0;
     virtual ColumnType getColumnType(int column_index, int sheet = 0) const = 0;
-    virtual bool isColumnUnique(int column_index, int sheet = 0) const { return false; }
+    virtual bool isColumnNullable(int column_index, int sheet = 0) const = 0;
+    virtual bool isColumnUnique(int column_index, int sheet = 0) const = 0;
     virtual const std::string & getColumnName(int column_index, int sheet = 0) const = 0;
     virtual int getColumnDecimals(int column_index) const { return 0; }
     
@@ -57,10 +58,12 @@ namespace sqldb {
     virtual void rollback() { }
 
     void append(Table & other) {
-      if (!getNumFields()) { // FIXME 
+      // TODO: handle multiple sheets
+      // TODO: handle column mismatch
+      if (!getNumFields()) {
 	setKeyType(other.getKeyType());
 	for (int i = 0; i < other.getNumFields(); i++) {
-	  addColumn(other.getColumnName(i), other.getColumnType(i), other.isColumnUnique(i), other.getColumnDecimals(i));
+	  addColumn(other.getColumnName(i), other.getColumnType(i), other.isColumnNullable(i), other.isColumnUnique(i), other.getColumnDecimals(i));
 	}
       }
       
@@ -82,9 +85,6 @@ namespace sqldb {
 	    case sqldb::ColumnType::DOUBLE:
 	      my_cursor->bind(cursor->getDouble(i), !is_null);
 	      break;
-	    case sqldb::ColumnType::FLOAT:
-	      my_cursor->bind(cursor->getFloat(i), !is_null);
-	      break;	    
 	    case sqldb::ColumnType::ANY:
 	    case sqldb::ColumnType::TEXT:
 	    case sqldb::ColumnType::URL:
@@ -113,62 +113,55 @@ namespace sqldb {
       }
     }
 
-    int getColumnByNames(std::unordered_set<std::string> names) const {
-      if (getNumFields()) {
-	for (int i = getNumFields() - 1; i >= 0; i--) {
-	  if (names.count(getColumnName(i))) return i;
-	}
+    int getColumnByNames(std::unordered_set<std::string> names, int sheet = 0) const {
+      for (int i = getNumFields(sheet) - 1; i >= 0; i--) {
+	if (names.count(getColumnName(i, sheet))) return i;
       }
       return -1;
     }
 
-    int getColumnByName(std::string_view name) const {
-      if (getNumFields()) {
-	for (int i = getNumFields() - 1; i >= 0; i--) {
-	  if (getColumnName(i) == name) return i;
-	}
+    int getColumnByName(std::string_view name, int sheet = 0) const {
+      for (int i = getNumFields(sheet) - 1; i >= 0; i--) {
+	if (getColumnName(i, sheet) == name) return i;
       }
       return -1;
     }
 
-    int getColumnByType(ColumnType type) const {
-      for (int i = 0, n = getNumFields(); i < n; i++) {
-	if (getColumnType(i) == type) return i;
+    int getColumnByType(ColumnType type, int sheet = 0) const {
+      for (int i = 0, n = getNumFields(sheet); i < n; i++) {
+	if (getColumnType(i, sheet) == type) return i;
       }
       return -1;
     }
 
-    std::vector<int> getColumnsByNames(std::unordered_set<std::string> names) const {
+    std::vector<int> getColumnsByNames(std::unordered_set<std::string> names, int sheet = 0) const {
       std::vector<int> r;
-      if (getNumFields()) {
-	for (int i = getNumFields() - 1; i >= 0; i--) {
-	  if (names.count(getColumnName(i))) {
-	    r.push_back(i);
-	  }
+      for (int i = getNumFields(sheet) - 1; i >= 0; i--) {
+	if (names.count(getColumnName(i)) > 0) {
+	  r.push_back(i);
 	}
       }
       return r;
     }
     
-    void addIntegerColumn(std::string_view name) { addColumn(std::move(name), ColumnType::INTEGER); }
+    void addIntegerColumn(std::string_view name, bool nullable = true, bool unique = false) { addColumn(std::move(name), ColumnType::INTEGER, nullable, unique); }
     void addCharColumn(std::string_view name) { addColumn(std::move(name), ColumnType::CHAR); }
     void addDateTimeColumn(std::string_view name) { addColumn(std::move(name), ColumnType::DATETIME); }
     void addDateColumn(std::string_view name) { addColumn(std::move(name), ColumnType::DATE); }
-    void addVarCharColumn(std::string_view name, bool unique = false) { addColumn(std::move(name), ColumnType::VARCHAR, unique); }
+    void addVarCharColumn(std::string_view name, bool nullable = true, bool unique = false) { addColumn(std::move(name), ColumnType::VARCHAR, unique); }
     void addTextColumn(std::string_view name) { addColumn(std::move(name), ColumnType::TEXT); }
-    void addFloatColumn(std::string_view name) { addColumn(std::move(name), ColumnType::FLOAT); }
-    void addDoubleColumn(std::string_view name, int decimals = -1) { addColumn(std::move(name), ColumnType::DOUBLE, false, decimals); }
+    void addDoubleColumn(std::string_view name, bool nullable = true, bool unique = false, int decimals = -1) { addColumn(std::move(name), ColumnType::DOUBLE, nullable, unique, decimals); }
     void addURLColumn(std::string_view name) { addColumn(std::move(name), ColumnType::URL); }
     void addTextKeyColumn(std::string_view name) { addColumn(std::move(name), ColumnType::TEXT_KEY); }
     void addBinaryKeyColumn(std::string_view name) { addColumn(std::move(name), ColumnType::BINARY_KEY); }
     void addEnumColumn(std::string_view name) { addColumn(std::move(name), ColumnType::ENUM); }
-    void addBoolColumn(std::string_view name) { addColumn(std::move(name), ColumnType::BOOL); }
+    void addBoolColumn(std::string_view name, bool nullable = true, bool unique = false) { addColumn(std::move(name), ColumnType::BOOL, nullable, unique); }
     void addBlobColumn(std::string_view name) { addColumn(std::move(name), ColumnType::BLOB); }
     
     std::string dumpRow(const Key & key) {
       std::string r;
       if (auto cursor = seek(key)) {
-	for (int i = 0; i < getNumFields(); i++) {
+	for (int i = 0; i < cursor->getNumFields(); i++) {
 	  if (i) r += ";";
 	  r += cursor->getText(i);
 	}
@@ -178,28 +171,18 @@ namespace sqldb {
       return r;
     }
 
-    bool hasNumericKey() const {
+    bool hasNumericKey() const noexcept {
       return key_type_.size() == 1 && is_numeric(key_type_.front());
     }
 
-    void setHasHumanReadableKey(bool t) { has_human_readable_key_ = t; }
-    bool hasHumanReadableKey() const { return has_human_readable_key_; }
+    void setHasHumanReadableKey(bool t) noexcept { has_human_readable_key_ = t; }
+    bool hasHumanReadableKey() const noexcept { return has_human_readable_key_; }
     
-    const std::vector<ColumnType> & getKeyType() const { return key_type_; }
+    const std::vector<ColumnType> & getKeyType() const noexcept { return key_type_; }
     void setKeyType(std::vector<ColumnType> key_type) { key_type_ = std::move(key_type); }
-    size_t getKeySize() const { return key_type_.size(); }
+    size_t getKeySize() const noexcept { return key_type_.size(); }
     
-    void setSortCol(int sort_col, int sort_subcol, bool desc = false) {
-      sort_col_ = sort_col;
-      sort_subcol_ = sort_subcol;
-      desc_sort_ = desc;
-    }
-    bool hasSorting() const { return sort_col_ >= 0; }
-    int getSortCol() const { return sort_col_; }
-    int getSortSubcol() const { return sort_subcol_; }
-    bool isDescSort() const { return desc_sort_; }
-
-    bool hasFilter(int col) const {
+    bool hasFilter(int col) const noexcept {
       return filter_.count(col) != 0;
     }
 
@@ -210,21 +193,17 @@ namespace sqldb {
       filter_.emplace(col, std::move(keys));
     }
     
-    const std::unordered_map<int, robin_hood::unordered_flat_set<sqldb::Key>> & getFilter() const { return filter_; }
+    const std::unordered_map<int, robin_hood::unordered_flat_set<sqldb::Key>> & getFilter() const noexcept { return filter_; }
     
-    const Log & getLog() const { return *log_; }
-    Log & getLog() { return *log_; }
+    const Log & getLog() const noexcept { return *log_; }
+    Log & getLog() noexcept { return *log_; }
 
     static inline std::string empty_string;
     
   private:
     std::vector<ColumnType> key_type_;
     bool has_human_readable_key_ = false;
-    int sort_col_ = -1, sort_subcol_ = -1;
-    bool desc_sort_ = false;
-
     std::unordered_map<int, robin_hood::unordered_flat_set<sqldb::Key> > filter_;
-    
     std::shared_ptr<Log> log_;
   };
 };

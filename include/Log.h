@@ -27,7 +27,7 @@ namespace sqldb {
       std::lock_guard<std::mutex> guard(mutex_);
       data_.emplace_back(Event::REMOVE, std::move(key));
     }
-    size_t size() const {
+    size_t size() const noexcept {
       std::lock_guard<std::mutex> guard(mutex_);
       return data_.size();
     }
@@ -37,7 +37,7 @@ namespace sqldb {
       if (row >= 0 && row < static_cast<int>(data_.size())) {
 	return data_[row];
       }
-      return std::pair<Event, sqldb::Key>();      
+      return std::pair<Event, sqldb::Key>();
     }
 
     std::vector<std::pair<Event, sqldb::Key>> getEvents(size_t cursor) const {

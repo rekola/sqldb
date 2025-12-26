@@ -10,7 +10,7 @@ namespace sqldb {
 
     virtual size_t update(const Key & key) = 0;
 
-    const Key & getRowKey() const { return row_key_; }
+    const Key & getRowKey() const noexcept { return row_key_; }
 
   protected:
     void setRowKey(sqldb::Key key) { row_key_ = std::move(key); }
